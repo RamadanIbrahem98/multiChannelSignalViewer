@@ -51,7 +51,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Channel 1</string>
+           <string>CH1</string>
           </property>
          </widget>
         </item>
@@ -289,6 +289,7 @@
    <class>PlotWidget</class>
    <extends>QGraphicsView</extends>
    <header>pyqtgraph</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
