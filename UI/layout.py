@@ -40,10 +40,7 @@ class Ui_MainWindow(object):
         self.showChannel1.setFont(font)
         self.showChannel1.setObjectName("showChannel1")
         self.verticalLayout_3.addWidget(self.showChannel1)
-
-        self.testing = QtWidgets.QWidget()
-
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.testing)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setSizeConstraint(
             QtWidgets.QLayout.SetDefaultConstraint)
         self.verticalLayout_2.setObjectName("verticalLayout_2")

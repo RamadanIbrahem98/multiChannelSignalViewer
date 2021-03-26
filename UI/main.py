@@ -13,9 +13,6 @@ class MainWindow(qtw.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        if (not self.ui.showChannel1.isChecked()):
-            self.ui.testing.setVisible(False)
-
         self.show()
 
 
