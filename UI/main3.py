@@ -10,8 +10,8 @@ from PyQt5 import QtCore as qtc
 from PyQt5 import QtGui as qtg
 from PyQt5 import uic
 
-from layout3 import Ui_MainWindow
 from about import Ui_Form
+from layout3 import Ui_MainWindow
 
 
 class About(qtw.QWidget):
@@ -21,13 +21,6 @@ class About(qtw.QWidget):
         self.ui.setupUi(self)
 
         self.show()
-
-
-class AnotherWindow(qtw.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
 
 
 class MainWindow(qtw.QMainWindow):
@@ -48,8 +41,10 @@ class MainWindow(qtw.QMainWindow):
 
         self.data_line = [[], [], []]
         self.data = [[], [], []]
-        self.idx = [0, 0, 0]
+        self.pointsToAppend = [0, 0, 0]
         self.isResumed = [False, False, False]
+        self.setChannelChecked = [self.ui.showChannel1,
+                                  self.ui.showChannel2, self.ui.showChannel3]
         self.channelComponents = [self.ui.channel1,
                                   self.ui.channel2, self.ui.channel3]
 
@@ -138,15 +133,20 @@ class MainWindow(qtw.QMainWindow):
     def hide(self, channel: int) -> None:
         if(self.channelComponents[channel].isVisible()):
             self.channelComponents[channel].hide()
+            self.setChannelChecked[channel].setChecked(False)
             self.clear(channel)
         else:
+            self.setChannelChecked[channel].setChecked(True)
             self.channelComponents[channel].show()
 
     def create_new_window(self):
-        mw = AnotherWindow()
-        mw.show()
+        self.newWindow = MainWindow()
+        self.newWindow.show()
 
     def browse(self, channel: int) -> None:
+        self.hide(channel)
+
+        self.clear(channel)
         self.filenames[channel] = qtw.QFileDialog.getOpenFileName(
             None, 'Load Signal', './', "Raw Data(*.csv *.txt *.xls)")
         path = self.filenames[channel][0]
@@ -159,39 +159,39 @@ class MainWindow(qtw.QMainWindow):
                 self.y[channel].append(float(line[1]))
                 self.x[channel].append(float(line[0]))
         self.isResumed[channel] = True
+
         self.plotGraph(channel)
-        self.plotSpectrogram(channel)
+        # self.plotSpectrogram(channel)
 
     def plotGraph(self, channel: int) -> None:
         self.data_line[channel] = self.graphChannels[channel].plot(
             self.x[channel], self.y[channel], name='CH1', pen=self.pen[channel])
         self.graphChannels[channel].plotItem.setLimits(
-            xMin=0, xMax=6, yMin=-2, yMax=2)
+            xMin=0, xMax=6, yMin=-3, yMax=3)
 
-        self.idx[channel] = 0
-        self.timers[channel].setInterval(100)
+        self.pointsToAppend[channel] = 0
+        self.timers[channel].setInterval(150)
         self.timers[channel].timeout.connect(lambda: self.updatePlot(channel))
         self.timers[channel].start()
 
     def updatePlot(self, channel: int) -> None:
-        xaxis = self.x[channel][:self.idx[channel]]
-        yaxis = self.y[channel][:self.idx[channel]]
-        self.idx[channel] += 10
-        if self.idx[channel] > len(self.x[channel]):
-            # self.idx[channel] = 0
+        xaxis = self.x[channel][:self.pointsToAppend[channel]]
+        yaxis = self.y[channel][:self.pointsToAppend[channel]]
+        self.pointsToAppend[channel] += 10
+        if self.pointsToAppend[channel] > len(self.x[channel]):
             self.timers[channel].stop()
 
-        if self.x[channel][self.idx[channel]] > 1.0:
+        if self.x[channel][self.pointsToAppend[channel]] > 1.0:
             self.graphChannels[channel].setLimits(xMin=min(xaxis, default=0), xMax=max(
-                xaxis, default=0))  # disable paning over xlimits
+                xaxis, default=0), yMin=-3, yMax=3)
         self.graphChannels[channel].plotItem.setXRange(
             max(xaxis, default=0)-1.0, max(xaxis, default=0))
 
         self.data_line[channel].setData(xaxis, yaxis)
 
-    def plotSpectrogram(self, channel: int) -> None:
-        self.data_line[channel] = self.graphChannels[channel].plot(
-            list(range(self.y[channel].size)), self.y[channel], name='CH1', pen=self.pen[channel])
+    # def plotSpectrogram(self, channel: int) -> None:
+    #     self.data_line[channel] = self.graphChannels[channel].plot(
+    #         list(range(self.y[channel].size)), self.y[channel], name='CH1', pen=self.pen[channel])
 
     def zoomin(self, channel: int) -> None:
         self.graphChannels[channel].plotItem.getViewBox().scaleBy((0.75, 0.75))
