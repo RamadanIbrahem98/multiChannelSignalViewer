@@ -59,6 +59,13 @@
        <widget class="PlotWidget" name="signal1Graph"/>
       </item>
       <item>
+       <widget class="Line" name="line_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="PlotWidget" name="spectrogram1Graph"/>
       </item>
       <item>
@@ -117,7 +124,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="stopBtn1">
+         <widget class="QPushButton" name="focusBtn1">
           <property name="maximumSize">
            <size>
             <width>50</width>
@@ -129,7 +136,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>Images/stop.png</normaloff>Images/stop.png</iconset>
+            <normaloff>Images/focus.png</normaloff>Images/focus.png</iconset>
           </property>
          </widget>
         </item>
@@ -151,7 +158,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="zoonOutBtn1">
+         <widget class="QPushButton" name="zoomOutBtn1">
           <property name="maximumSize">
            <size>
             <width>50</width>
@@ -209,12 +216,19 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="Channel1Components_2">
+     <layout class="QHBoxLayout" name="Channel2Components">
       <item>
        <widget class="PlotWidget" name="signal2Graph"/>
       </item>
       <item>
-       <widget class="PlotWidget" name="spectrograph2Graph"/>
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="PlotWidget" name="spectrogram2Graph"/>
       </item>
       <item>
        <layout class="QVBoxLayout" name="controls2">
@@ -269,7 +283,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="stopBtn2">
+         <widget class="QPushButton" name="focusBtn2">
           <property name="maximumSize">
            <size>
             <width>50</width>
@@ -281,7 +295,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>Images/stop.png</normaloff>Images/stop.png</iconset>
+            <normaloff>Images/focus.png</normaloff>Images/focus.png</iconset>
           </property>
          </widget>
         </item>
@@ -303,7 +317,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="zoonOutBtn2">
+         <widget class="QPushButton" name="zoomOutBtn2">
           <property name="maximumSize">
            <size>
             <width>50</width>
@@ -366,7 +380,14 @@
        <widget class="PlotWidget" name="signal3Graph"/>
       </item>
       <item>
-       <widget class="PlotWidget" name="spectrograph3Graph"/>
+       <widget class="Line" name="line_5">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="PlotWidget" name="spectrogram3Graph"/>
       </item>
       <item>
        <layout class="QVBoxLayout" name="controls3">
@@ -421,7 +442,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="stopBtn3">
+         <widget class="QPushButton" name="focusBtn3">
           <property name="maximumSize">
            <size>
             <width>50</width>
@@ -433,7 +454,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>Images/stop.png</normaloff>Images/stop.png</iconset>
+            <normaloff>Images/focus.png</normaloff>Images/focus.png</iconset>
           </property>
          </widget>
         </item>
@@ -455,7 +476,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="zoonOutBtn3">
+         <widget class="QPushButton" name="zoomOutBtn3">
           <property name="maximumSize">
            <size>
             <width>50</width>
