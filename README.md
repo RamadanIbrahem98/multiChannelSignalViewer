@@ -5,6 +5,10 @@
   <img src="https://img.shields.io/github/last-commit/RamadanIbrahem98/multiChannelSignalViewer?style=plastic&logo=appveyor" alt="last-commit" />
 </p>
 
+<div align="center">
+  <img src="UI/assets/preview.gif" />
+</div>
+
 ## Table of Contents
 
 -   [About the Project](#about-the-project)
@@ -22,8 +26,9 @@ This is a Multi-Channel Bio-Signal Viewer GUI Application
 
 -   Python
     -   PyQt5
-    -   Matplotlib
     -   pyqtgraph
+    -   FPDF
+    -   Scipy
 
 ## Setting Up the Environment
 
@@ -69,14 +74,7 @@ This is a Multi-Channel Bio-Signal Viewer GUI Application
 -   Ramadan Ibrahem - [![linkedin-shield]](https://www.linkedin.com/in/ramadanibrahem/)
 -   Muhammad Seyam - [![linkedin-shield]](https://www.linkedin.com/in/mohamed-seyam-91b3b81b7/)
 -   Muhammad Abd-ElAziz - [![linkedin-shield]](https://www.linkedin.com/in/mohamed-ahmed-abdelaziz)
--   Yousef Samir - [![linkedin-shield]](https://www.linkedin.com/in/#)
-
-## Acknowledgements
-
-We want to thank
-
--   [StackOverflow Community](https://stackoverflow.com)
--   [Cory M. Schafer](https://www.youtube.com/user/schafer5)
+-   Yousef Samir - [![linkedin-shield]](https://www.linkedin.com/in/youssef-samir-b24848191)
 
 ## About
 
