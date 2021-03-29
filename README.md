@@ -6,7 +6,7 @@
 </p>
 
 <div align="center">
-  <img src="./UI/assets/preview.gif" />
+  <img src="preview.gif" />
 </div>
 
 ## Table of Contents
