@@ -5,9 +5,7 @@
   <img src="https://img.shields.io/github/last-commit/RamadanIbrahem98/multiChannelSignalViewer?style=plastic&logo=appveyor" alt="last-commit" />
 </p>
 
-<div align="center">
-  <img src="preview.gif" />
-</div>
+![](preview.gif)
 
 ## Table of Contents
 
