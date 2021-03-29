@@ -9,9 +9,15 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtGui as qtg
 from PyQt5 import uic
+import pyqtgraph.exporters
+
+import matplotlib
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 from about import Ui_Form
 from layout3 import Ui_MainWindow
+matplotlib.use('Qt5Agg')
 
 
 class About(qtw.QWidget):
@@ -23,6 +29,14 @@ class About(qtw.QWidget):
         self.show()
 
 
+class MplCanvas(FigureCanvasQTAgg):
+
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,6 +46,8 @@ class MainWindow(qtw.QMainWindow):
         self.filenames = ['', '', '']
         self.graphChannels = [self.ui.signal1Graph,
                               self.ui.signal2Graph, self.ui.signal3Graph]
+        self.spectrogramChannels = [
+            self.ui.spectrogram1Graph, self.ui.spectrogram2Graph, self.ui.spectrogram3Graph]
         self.timers = [self.ui.timer1, self.ui.timer2, self.ui.timer3]
         self.pen = [pg.mkPen(color=(255, 0, 0), width=2), pg.mkPen(
             color=(0, 255, 0), width=2), pg.mkPen(color=(0, 0, 255), width=2)]
@@ -169,6 +185,11 @@ class MainWindow(qtw.QMainWindow):
         self.graphChannels[channel].plotItem.setLimits(
             xMin=0, xMax=6, yMin=-3, yMax=3)
 
+        # self.exporter = pg.exporters.ImageExporter(
+        #     self.data_line[channel].plotItem)
+        # self.exporter.parameters()['width'] = 100
+        # self.exporter.export('filename.png')
+
         self.pointsToAppend[channel] = 0
         self.timers[channel].setInterval(150)
         self.timers[channel].timeout.connect(lambda: self.updatePlot(channel))
@@ -177,19 +198,24 @@ class MainWindow(qtw.QMainWindow):
     def updatePlot(self, channel: int) -> None:
         xaxis = self.x[channel][:self.pointsToAppend[channel]]
         yaxis = self.y[channel][:self.pointsToAppend[channel]]
-        self.pointsToAppend[channel] += 10
-        if self.pointsToAppend[channel] > len(self.x[channel]):
+        self.pointsToAppend[channel] += 20
+        if self.pointsToAppend[channel] > len(self.y[channel]):
             self.timers[channel].stop()
+            return
+        else:
+            if self.x[channel][self.pointsToAppend[channel]] > 1.0:
+                self.graphChannels[channel].setLimits(xMin=min(xaxis, default=0), xMax=max(
+                    xaxis, default=0), yMin=-3, yMax=3)
+            self.graphChannels[channel].plotItem.setXRange(
+                max(xaxis, default=0)-1.0, max(xaxis, default=0))
 
-        if self.x[channel][self.pointsToAppend[channel]] > 1.0:
-            self.graphChannels[channel].setLimits(xMin=min(xaxis, default=0), xMax=max(
-                xaxis, default=0), yMin=-3, yMax=3)
-        self.graphChannels[channel].plotItem.setXRange(
-            max(xaxis, default=0)-1.0, max(xaxis, default=0))
-
-        self.data_line[channel].setData(xaxis, yaxis)
+            self.data_line[channel].setData(xaxis, yaxis)
 
     # def plotSpectrogram(self, channel: int) -> None:
+    #     sc = MplCanvas(
+    #         self, width=5, height=4, dpi=100)
+    #     sc.axes.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
+    #     self.setCentralWidget(sc)
     #     self.data_line[channel] = self.graphChannels[channel].plot(
     #         list(range(self.y[channel].size)), self.y[channel], name='CH1', pen=self.pen[channel])
 

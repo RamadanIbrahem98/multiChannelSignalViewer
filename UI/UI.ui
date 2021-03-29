@@ -110,7 +110,7 @@
              </property>
              <property name="icon">
               <iconset>
-               <normaloff>Images/stop.png</normaloff>Images/stop.png</iconset>
+               <normaloff>Images/focus.png</normaloff>Images/focus.png</iconset>
              </property>
             </widget>
             <widget class="QPushButton" name="zoomInBtn1">
