@@ -1,4 +1,4 @@
-import os, sys, shutil, csv, datetime
+import os, sys, shutil, csv
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
@@ -29,7 +29,13 @@ class MainWindow(qtw.QMainWindow):
         self.CHANNEL2 = 1
         self.CHANNEL3 = 2
         self.PLOT_DIR = 'Plots'
-        self.PDF_DIR = 'PDFs'
+        self.filenames = ['', '', '']
+        self.y = [[], [], []]
+        self.x = [[], [], []]
+        self.data_line = [[], [], []]
+        self.pointsToAppend = [0, 0, 0]
+        self.isResumed = [False, False, False]
+
 
         # GUI Components to Manipulate
         self.graphChannels = [self.ui.signal1Graph, self.ui.signal2Graph, self.ui.signal3Graph]
@@ -47,41 +53,29 @@ class MainWindow(qtw.QMainWindow):
         self.zoomIns = [self.ui.zoomInBtn1, self.ui.zoomInBtn2, self.ui.zoomInBtn3]
         self.zoomOuts = [self.ui.zoomOutBtn1, self.ui.zoomOutBtn2, self.ui.zoomOutBtn3]
         self.clearGraphs = [self.ui.clearBtn1, self.ui.clearBtn2, self.ui.clearBtn3]
-
-        def fun(connections):
-            for connection in connections:
-                connection
-
         
-        
-        # The Filenames of the data Read from the File system
-        self.filenames = ['', '', '']
-
         # The pen variable corresponding with each plot
         self.pen = [pg.mkPen(color=(255, 0, 0), width=2), pg.mkPen(
             color=(0, 255, 0), width=2), pg.mkPen(color=(0, 0, 255), width=2)]
 
-        self.y = [[], [], []]
-        self.x = [[], [], []]
-
-        self.data_line = [[], [], []]
-        # self.data = [[], [], []]
-        self.pointsToAppend = [0, 0, 0]
-        self.isResumed = [False, False, False]
-
+        def mappingSlotsAndSignals(connections):
+            for connection in connections:
+                connection
+        
         for channel in self.channelComponents:
             channel.show()
         for channelToCheck in self.setChannelChecked:
             channelToCheck.setChecked(True)
+        
 
-        fun(map(lambda showGraph, CHANNEL: showGraph.stateChanged.connect(lambda: self.hide(CHANNEL)), self.setChannelChecked, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
-        fun(map(lambda open, CHANNEL: open.triggered.connect(lambda: self.browse(CHANNEL)), self.openChannels, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
-        fun(map(lambda playBtn, CHANNEL: playBtn.clicked.connect(lambda: self.play(CHANNEL)), self.playBtns, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
-        fun(map(lambda pauseBtn, CHANNEL: pauseBtn.clicked.connect(lambda: self.pause(CHANNEL)), self.pauseBtns, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
-        fun(map(lambda autoRange, CHANNEL: autoRange.clicked.connect(lambda: self.graphChannels[CHANNEL].getPlotItem().enableAutoRange()), self.autoRanges, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
-        fun(map(lambda zoomIn, CHANNEL: zoomIn.clicked.connect(lambda: self.zoomin(CHANNEL)), self.zoomIns, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
-        fun(map(lambda zoomOut, CHANNEL: zoomOut.clicked.connect(lambda: self.zoomout(CHANNEL)), self.zoomOuts, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
-        fun(map(lambda clearGraph, CHANNEL: clearGraph.clicked.connect(lambda: self.clear(CHANNEL)), self.clearGraphs, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda showGraph, CHANNEL: showGraph.stateChanged.connect(lambda: self.hide(CHANNEL)), self.setChannelChecked, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda open, CHANNEL: open.triggered.connect(lambda: self.browse(CHANNEL)), self.openChannels, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda playBtn, CHANNEL: playBtn.clicked.connect(lambda: self.play(CHANNEL)), self.playBtns, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda pauseBtn, CHANNEL: pauseBtn.clicked.connect(lambda: self.pause(CHANNEL)), self.pauseBtns, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda autoRange, CHANNEL: autoRange.clicked.connect(lambda: self.graphChannels[CHANNEL].getPlotItem().enableAutoRange()), self.autoRanges, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda zoomIn, CHANNEL: zoomIn.clicked.connect(lambda: self.zoomin(CHANNEL)), self.zoomIns, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda zoomOut, CHANNEL: zoomOut.clicked.connect(lambda: self.zoomout(CHANNEL)), self.zoomOuts, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
+        mappingSlotsAndSignals(map(lambda clearGraph, CHANNEL: clearGraph.clicked.connect(lambda: self.clear(CHANNEL)), self.clearGraphs, [self.CHANNEL1, self.CHANNEL2, self.CHANNEL3]))
         self.ui.actionAbout.triggered.connect(lambda: self.showAbout())
         self.ui.actionExit.triggered.connect(lambda: self.close())
         self.ui.actionNew.triggered.connect(lambda: self.create_new_window())
@@ -89,32 +83,14 @@ class MainWindow(qtw.QMainWindow):
 
         self.show()
 
+
+    def create_new_window(self):
+        self.newWindow = MainWindow()
+        self.newWindow.show()
+
     def showAbout(self) -> None:
         self.about = About()
         self.about.show()
-
-    def play(self, channel: int) -> None:
-        if not self.y[channel]:
-            self.browse(channel)
-        if not self.isResumed[channel]:
-            self.timers[channel].start()
-            self.isResumed[channel] = True
-
-    def pause(self, channel: int) -> None:
-        if not self.y[channel]:
-            self.browse(channel)
-        if self.isResumed[channel]:
-            self.timers[channel].stop()
-            self.isResumed[channel] = False
-
-    def clear(self, channel: int) -> None:
-        if self.y[channel]:
-            self.graphChannels[channel].removeItem(self.data_line[channel])
-            self.timers[channel].stop()
-            self.isResumed[channel] = False
-            self.y[channel] = []
-            self.x[channel] = []
-            self.data_line[channel] = []
 
     def hide(self, channel: int) -> None:
         if(self.channelComponents[channel].isVisible()):
@@ -124,10 +100,6 @@ class MainWindow(qtw.QMainWindow):
         else:
             self.setChannelChecked[channel].setChecked(True)
             self.channelComponents[channel].show()
-
-    def create_new_window(self):
-        self.newWindow = MainWindow()
-        self.newWindow.show()
 
     def browse(self, channel: int) -> None:
         self.hide(channel)
@@ -147,6 +119,35 @@ class MainWindow(qtw.QMainWindow):
 
         self.plotGraph(channel)
         self.plotSpectrogram(channel)
+
+    def play(self, channel: int) -> None:
+        if not self.y[channel]:
+            self.browse(channel)
+        if not self.isResumed[channel]:
+            self.timers[channel].start()
+            self.isResumed[channel] = True
+
+    def pause(self, channel: int) -> None:
+        if not self.y[channel]:
+            self.browse(channel)
+        if self.isResumed[channel]:
+            self.timers[channel].stop()
+            self.isResumed[channel] = False
+
+    def zoomin(self, channel: int) -> None:
+        self.graphChannels[channel].plotItem.getViewBox().scaleBy((0.75, 0.75))
+
+    def zoomout(self, channel: int) -> None:
+        self.graphChannels[channel].plotItem.getViewBox().scaleBy((1.25, 1.25))
+
+    def clear(self, channel: int) -> None:
+        if self.y[channel]:
+            self.graphChannels[channel].removeItem(self.data_line[channel])
+            self.timers[channel].stop()
+            self.isResumed[channel] = False
+            self.y[channel] = []
+            self.x[channel] = []
+            self.data_line[channel] = []
 
     def plotGraph(self, channel: int) -> None:
         self.data_line[channel] = self.graphChannels[channel].plot(self.x[channel], self.y[channel], name='CH1', pen=self.pen[channel])
@@ -197,16 +198,8 @@ class MainWindow(qtw.QMainWindow):
         img.setImage(Sxx)
         img.scale(t[-1]/np.size(Sxx, axis=1), f[-1]/np.size(Sxx, axis=0))
         p1.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
-        # Add labels to the axis
         # p1.setLabel('bottom', "Time", units='s')
-        # If you include the units, Pyqtgraph automatically scales the axis and adjusts the SI prefix (in this case kHz)
         # p1.setLabel('left', "Frequency", units='Hz')
-
-    def zoomin(self, channel: int) -> None:
-        self.graphChannels[channel].plotItem.getViewBox().scaleBy((0.75, 0.75))
-
-    def zoomout(self, channel: int) -> None:
-        self.graphChannels[channel].plotItem.getViewBox().scaleBy((1.25, 1.25))
 
     def generatePDF(self):
         try:
@@ -232,16 +225,12 @@ class MainWindow(qtw.QMainWindow):
                 exporter.export(f'{self.PLOT_DIR}/spec-{i}.png')
 
         pdf = PDF()
-        plots_per_page = pdf.construct(self.PLOT_DIR)
+        plotsPerPage = pdf.construct(self.PLOT_DIR)
 
-        for elem in plots_per_page:
-            pdf.print_page(elem, self.PLOT_DIR)
-        try:
-            os.mkdir(self.PDF_DIR)
-        except:
-            pass
-        outFileName = qtw.QFileDialog.getSaveFileName(None, 'Load Signal', './', "Document(*.pdf)")
-        pdf.output(f'{outFileName[0]}', 'F')
+        for page in plotsPerPage:
+            pdf.print_page(page, self.PLOT_DIR)
+        outFile = qtw.QFileDialog.getSaveFileName(None, 'Load Signal', './', "Document(*.pdf)")
+        pdf.output(f'{outFile[0]}', 'F')
         try:
             shutil.rmtree(self.PLOT_DIR)
         except:
