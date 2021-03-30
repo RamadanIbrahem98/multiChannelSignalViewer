@@ -9,8 +9,6 @@
     <img src="UI/assets/preview.gif" />
 </p>
 
-![](preview.gif)
-
 ## Table of Contents
 
 -   [About the Project](#about-the-project)
