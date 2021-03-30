@@ -241,6 +241,7 @@ class MainWindow(qtw.QMainWindow):
         hist.shape
         hist.layout.setContentsMargins(0, 0, 0, 0)
         hist.vb.setMouseEnabled(x=False, y=False)
+        
         hist.vb.setMenuEnabled(False)
         # Sxx contains the amplitude for each pixel
         img.setImage(Sxx)
