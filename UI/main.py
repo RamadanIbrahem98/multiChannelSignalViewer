@@ -188,13 +188,9 @@ class MainWindow(qtw.QMainWindow):
             {'mode': 'rgb',
              'ticks': [(0.5, (0, 182, 188, 255)),
                        (1.0, (246, 111, 0, 255)),
-                       (0.0, (75, 0, 113, 255))]
-             })
+                       (0.0, (75, 0, 113, 255))]})
         hist.gradient.showTicks(False)
-        hist.shape
-        hist.layout.setContentsMargins(0, 0, 0, 0)
-        hist.vb.setMouseEnabled(x=False, y=False)
-        hist.vb.setMenuEnabled(False)
+        
         img.setImage(Sxx)
         img.scale(t[-1]/np.size(Sxx, axis=1), f[-1]/np.size(Sxx, axis=0))
         p1.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
@@ -214,7 +210,6 @@ class MainWindow(qtw.QMainWindow):
                 images[i] = 1
             else:
                 self.hide(i)
-
         for i in range(3):
             if images[i]:
                 exporter = pg.exporters.ImageExporter(self.graphChannels[i].plotItem)
@@ -223,7 +218,6 @@ class MainWindow(qtw.QMainWindow):
 
                 exporter = pg.exporters.ImageExporter(self.spectrogramChannels[i].scene())
                 exporter.export(f'{self.PLOT_DIR}/spec-{i}.png')
-
         pdf = PDF()
         plotsPerPage = pdf.construct(self.PLOT_DIR)
 
@@ -235,7 +229,6 @@ class MainWindow(qtw.QMainWindow):
             shutil.rmtree(self.PLOT_DIR)
         except:
             pass
-
         qtw.QMessageBox.information(self, 'success', 'PDF has been created')
 
 
