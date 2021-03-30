@@ -1,9 +1,12 @@
-import os, sys, shutil, csv
+import sys, csv
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
 from PyQt5 import QtWidgets as qtw
 import scipy.signal
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.gridspec import GridSpec
 
 from PDF import PDF
 from about import Ui_Form
@@ -32,6 +35,8 @@ class MainWindow(qtw.QMainWindow):
         self.filenames = ['', '', '']
         self.y = [[], [], []]
         self.x = [[], [], []]
+        self.a = [[], [], []]
+        self.xIdx = [[0, 0], [0, 0], [0, 0]]
         self.data_line = [[], [], []]
         self.pointsToAppend = [0, 0, 0]
         self.isResumed = [False, False, False]
@@ -152,14 +157,18 @@ class MainWindow(qtw.QMainWindow):
     def plotGraph(self, channel: int) -> None:
         self.data_line[channel] = self.graphChannels[channel].plot(self.x[channel], self.y[channel], name='CH1', pen=self.pen[channel])
         self.graphChannels[channel].plotItem.setLimits(xMin=0, xMax=6, yMin=-(np.mean(self.y[channel]) - min(self.y[channel])), yMax=np.mean(self.y[channel]) - min(self.y[channel]))
-
+        
         self.pointsToAppend[channel] = 0
+        print()
         self.timers[channel].setInterval(150)
         self.timers[channel].timeout.connect(lambda: self.updatePlot(channel))
-        self.timers[channel].start()
+        if self.pointsToAppend[channel] < len(self.x[channel]):
+            self.timers[channel].start()
+        
 
     def updatePlot(self, channel: int) -> None:
         xaxis = self.x[channel][:self.pointsToAppend[channel]]
+        self.a[channel] = xaxis
         yaxis = self.y[channel][:self.pointsToAppend[channel]]
         self.pointsToAppend[channel] += 20
         if self.pointsToAppend[channel] > len(self.x[channel]):
@@ -194,42 +203,58 @@ class MainWindow(qtw.QMainWindow):
         img.setImage(Sxx)
         img.scale(t[-1]/np.size(Sxx, axis=1), f[-1]/np.size(Sxx, axis=0))
         p1.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
-        # p1.setLabel('bottom', "Time", units='s')
-        # p1.setLabel('left', "Frequency", units='Hz')
+        p1.setLabel('bottom', "Time", units='s')
+        p1.setLabel('left', "Frequency", units='Hz')
 
     def generatePDF(self):
-        try:
-            shutil.rmtree(self.PLOT_DIR)
-            os.mkdir(self.PLOT_DIR)
-        except FileNotFoundError:
-            os.mkdir(self.PLOT_DIR)
-
         images = [0, 0, 0]
+        rows = 0
+        xmax = [self.pointsToAppend[0], self.pointsToAppend[1], self.pointsToAppend[2]]
         for i in range(3):
             if self.y[i]:
                 images[i] = 1
+                rows += 1
             else:
                 self.hide(i)
-        for i in range(3):
-            if images[i]:
-                exporter = pg.exporters.ImageExporter(self.graphChannels[i].plotItem)
-                exporter.parameters()['width'] = 470
-                exporter.export(f'{self.PLOT_DIR}/plot-{i}.png')
 
-                exporter = pg.exporters.ImageExporter(self.spectrogramChannels[i].scene())
-                exporter.export(f'{self.PLOT_DIR}/spec-{i}.png')
-        pdf = PDF()
-        plotsPerPage = pdf.construct(self.PLOT_DIR)
-
-        for page in plotsPerPage:
-            pdf.print_page(page, self.PLOT_DIR)
+        if not rows:
+            qtw.QMessageBox.information(self, 'failed', 'You have to input a signal first')
+            return
         outFile = qtw.QFileDialog.getSaveFileName(None, 'Load Signal', './', "Document(*.pdf)")
-        pdf.output(f'{outFile[0]}', 'F')
-        try:
-            shutil.rmtree(self.PLOT_DIR)
-        except:
-            pass
+        report = PdfPages(outFile[0])
+        fig = plt.figure(figsize=(12, 16))
+        G = GridSpec(2,1)
+        for channel in range(3):
+            if images[channel]:
+                self.pause(channel)
+                fig = plt.figure(figsize=(12, 16))
+                G = GridSpec(2,1)
+                axes1 = plt.subplot(G[0,0])
+                self.getFigure(axes1, channel, xmax[channel])
+                axes2 = plt.subplot(G[1, 0])
+                self.getSpectrogram(axes2, channel)
+                report.savefig(fig)
+        report.close()
         qtw.QMessageBox.information(self, 'success', 'PDF has been created')
+
+    def getFigure(self, fig, channel, xmax) -> None:
+        xRange = round(1 / (self.x[channel][1] - self.x[channel][0]))
+        if(xmax - xRange > 0):
+            xmin = xmax - xRange
+        else:
+            xmin = 0
+        
+        fig.plot(self.x[channel][xmin:xmax], self.y[channel][xmin:xmax])
+        fig.set_xlabel('time (sec)')
+        fig.set_ylabel('amplitude (v)')
+        fig.set_title(f'plot - {channel + 1}')
+
+    def getSpectrogram(self, fig, channel):
+        fs = 1/(self.x[channel][1] - self.x[channel][0])
+        fig.specgram(np.array(self.y[channel]).astype(float), Fs=fs)
+        fig.set_xlabel('time (sec)')
+        fig.set_ylabel('frequency (Hz)')
+        fig.set_title(f'spectrogram - {channel + 1}')
 
 
 if __name__ == '__main__':
