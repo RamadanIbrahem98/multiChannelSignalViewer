@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 .vs/
 .vscode/
-
+PDFs/
 # C extensions
 *.so
 
