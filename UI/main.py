@@ -10,6 +10,7 @@ from matplotlib.gridspec import GridSpec
 
 from PDF import PDF
 from about import Ui_Form
+# from layout import Ui_MainWindow
 from layout import Ui_MainWindow
 
 
@@ -38,6 +39,7 @@ class MainWindow(qtw.QMainWindow):
         self.a = [[], [], []]
         self.xIdx = [[0, 0], [0, 0], [0, 0]]
         self.data_line = [[], [], []]
+        self.spectrogramData = [None, None, None]
         self.pointsToAppend = [0, 0, 0]
         self.isResumed = [False, False, False]
 
@@ -102,9 +104,11 @@ class MainWindow(qtw.QMainWindow):
             self.channelComponents[channel].hide()
             self.setChannelChecked[channel].setChecked(False)
             self.clear(channel)
+            self.resize(self.minimumSize())
         else:
             self.setChannelChecked[channel].setChecked(True)
             self.channelComponents[channel].show()
+            self.resize(self.minimumSize())
 
     def browse(self, channel: int) -> None:
         self.hide(channel)
@@ -148,6 +152,7 @@ class MainWindow(qtw.QMainWindow):
     def clear(self, channel: int) -> None:
         if self.y[channel]:
             self.graphChannels[channel].removeItem(self.data_line[channel])
+            self.spectrogramChannels[channel].removeItem(self.spectrogramData[channel])
             self.timers[channel].stop()
             self.isResumed[channel] = False
             self.y[channel] = []
@@ -184,13 +189,13 @@ class MainWindow(qtw.QMainWindow):
         fs = 1 / (self.x[channel][1] - self.x[channel][0])
         yaxis = np.array(self.y[channel])
         f, t, Sxx = scipy.signal.spectrogram(yaxis, fs)
-        p1 = self.spectrogramChannels[channel].addPlot()
+        self.spectrogramData[channel] = self.spectrogramChannels[channel].addPlot()
 
         img = pg.ImageItem()
-        p1.addItem(img)
+        self.spectrogramData[channel].addItem(img)
         hist = pg.HistogramLUTItem()
         hist.setImageItem(img)
-        self.spectrogramChannels[channel].addItem(p1)
+        self.spectrogramChannels[channel].addItem(self.spectrogramData[channel])
         self.spectrogramChannels[channel].show()
         hist.setLevels(np.min(Sxx), np.max(Sxx))
         hist.gradient.restoreState(
@@ -202,20 +207,21 @@ class MainWindow(qtw.QMainWindow):
         
         img.setImage(Sxx)
         img.scale(t[-1]/np.size(Sxx, axis=1), f[-1]/np.size(Sxx, axis=0))
-        p1.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
-        p1.setLabel('bottom', "Time", units='s')
-        p1.setLabel('left', "Frequency", units='Hz')
+        self.spectrogramData[channel].setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
+        self.spectrogramData[channel].setLabel('bottom', "Time", units='s')
+        self.spectrogramData[channel].setLabel('left', "Frequency", units='Hz')
 
     def generatePDF(self):
         images = [0, 0, 0]
         rows = 0
         xmax = [self.pointsToAppend[0], self.pointsToAppend[1], self.pointsToAppend[2]]
-        for i in range(3):
-            if self.y[i]:
-                images[i] = 1
+        for channel in range(3):
+            if self.y[channel]:
+                images[channel] = 1
+                self.pause(channel)
                 rows += 1
             else:
-                self.hide(i)
+                self.hide(channel)
 
         if not rows:
             qtw.QMessageBox.information(self, 'failed', 'You have to input a signal first')
@@ -226,7 +232,6 @@ class MainWindow(qtw.QMainWindow):
         G = GridSpec(2,1)
         for channel in range(3):
             if images[channel]:
-                self.pause(channel)
                 fig = plt.figure(figsize=(12, 16))
                 G = GridSpec(2,1)
                 axes1 = plt.subplot(G[0,0])
