@@ -49,6 +49,7 @@ class MainWindow(qtw.QMainWindow):
         self.x = [[], [], []]
 
         self.data_line = [[], [], []]
+        self.spectrogramData = [None, None, None]
         # self.data = [[], [], []]
         self.pointsToAppend = [0, 0, 0]
         self.isResumed = [False, False, False]
@@ -135,6 +136,7 @@ class MainWindow(qtw.QMainWindow):
     def clear(self, channel: int) -> None:
         if self.y[channel]:
             self.graphChannels[channel].removeItem(self.data_line[channel])
+            self.spectrogramChannels[channel].removeItem(self.spectrogramData[channel])
             self.timers[channel].stop()
             self.isResumed[channel] = False
             self.y[channel] = []
@@ -214,17 +216,17 @@ class MainWindow(qtw.QMainWindow):
         fs = 1 / (self.x[channel][1] - self.x[channel][0])
         yaxis = np.array(self.y[channel])
         f, t, Sxx = scipy.signal.spectrogram(yaxis, fs)
-        p1 = self.spectrogramChannels[channel].addPlot()
+        self.spectrogramData[channel] = self.spectrogramChannels[channel].addPlot()
 
         # Item for displaying image data
         img = pg.ImageItem()
-        p1.addItem(img)
+        self.spectrogramData[channel].addItem(img)
         # Add a histogram with which to control the gradient of the image
         hist = pg.HistogramLUTItem()
         # Link the histogram to the image
         hist.setImageItem(img)
         # If you don't add the histogram to the window, it stays invisible, but I find it useful.
-        self.spectrogramChannels[channel].addItem(p1)
+        self.spectrogramChannels[channel].addItem(self.spectrogramData[channel])
         # Show the window
         self.spectrogramChannels[channel].show()
         # Fit the min and max levels of the histogram to the data available
@@ -249,11 +251,11 @@ class MainWindow(qtw.QMainWindow):
         img.scale(t[-1]/np.size(Sxx, axis=1),
                   f[-1]/np.size(Sxx, axis=0))
         # Limit panning/zooming to the spectrogram
-        p1.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
+        self.spectrogramData[channel].setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
         # Add labels to the axis
-        # p1.setLabel('bottom', "Time", units='s')
+        # self.spectrogramData[channel].setLabel('bottom', "Time", units='s')
         # If you include the units, Pyqtgraph automatically scales the axis and adjusts the SI prefix (in this case kHz)
-        # p1.setLabel('left', "Frequency", units='Hz')
+        # self.spectrogramData[channel].setLabel('left', "Frequency", units='Hz')
 
     def zoomin(self, channel: int) -> None:
         self.graphChannels[channel].plotItem.getViewBox().scaleBy((0.75, 0.75))
