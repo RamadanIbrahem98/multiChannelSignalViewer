@@ -245,6 +245,7 @@ class MainWindow(qtw.QMainWindow):
         hist.vb.setMouseEnabled(x=False, y=False)
         
         hist.vb.setMenuEnabled(False)
+        hist.shape
         # Sxx contains the amplitude for each pixel
         img.setImage(Sxx)
         # Scale the X and Y Axis to time and frequency (standard is pixels)
