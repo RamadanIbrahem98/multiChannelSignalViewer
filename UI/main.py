@@ -39,8 +39,8 @@ class MainWindow(qtw.QMainWindow):
         self.spectrogramChannels = [
             self.ui.spectrogram1Graph, self.ui.spectrogram2Graph, self.ui.spectrogram3Graph]
         self.timers = [self.ui.timer1, self.ui.timer2, self.ui.timer3]
-        self.pen = [pg.mkPen(color=(255, 0, 0), width=2), pg.mkPen(
-            color=(0, 255, 0), width=2), pg.mkPen(color=(0, 0, 255), width=2)]
+        self.pen = [pg.mkPen(color=(255, 0, 0), width=1), pg.mkPen(
+            color=(0, 255, 0), width=1), pg.mkPen(color=(0, 0, 255), width=1)]
 
         self.PLOT_DIR = 'Plots'
         self.PDF_DIR = 'PDFs'
