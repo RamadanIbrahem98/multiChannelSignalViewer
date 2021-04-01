@@ -203,6 +203,7 @@ class MainWindow(qtw.QMainWindow):
         self.data_line[channel].setData(xaxis, yaxis)
 
     def plotSpectrogram(self, channel: int) -> None:
+        pyqtgraph.setConfigOptions(imageAxisOrder='row-major')
         # mwindow = MatplotlibWidget()
         # subplot = mwindow.getFigure().add_subplot(111)
         # subplot.plot(self.x[channel], self.y[channel])
