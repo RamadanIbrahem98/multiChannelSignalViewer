@@ -32,25 +32,12 @@ class PDF(FPDF):
         self.set_text_color(128)
         self.cell(0, 10, 'Page ' + str(self.page_no()), 0, 0, 'C')
 
-    def page_body(self, images, PLOT_DIR):
-        if len(images) == 3:
-            # image    15 from left   25 from top    self.width - 30 -> distance to right (width of the graph)
-            self.image(PLOT_DIR + '/' + images[0], 15, 30, self.WIDTH - 30)
-            self.image(PLOT_DIR + '/' +
-                       images[1], 15, self.WIDTH / 2 + 5, self.WIDTH - 30)
-            self.image(PLOT_DIR + '/' +
-                       images[2], 15, self.WIDTH / 2 + 90, self.WIDTH - 30)
-        elif len(images) == 2:
-            self.image(PLOT_DIR + '/' + images[0], 15, 30, self.WIDTH - 30)
-            self.image(PLOT_DIR + '/' +
-                       images[1], 15, self.WIDTH / 2 + 20, self.WIDTH - 30)
-        else:
-            self.image(PLOT_DIR + '/' + images[0], 15, 30, self.WIDTH - 30)
-
     def print_page(self, images, PLOT_DIR):
         # Generates the report
         self.add_page()
-        self.page_body(images, PLOT_DIR)
+        self.image(PLOT_DIR + '/' + images[0], 15, 30, self.WIDTH - 30)
+        self.image(PLOT_DIR + '/' +
+                   images[1], 15, self.WIDTH / 2 + 20, self.WIDTH - 30)
 
     def construct(self, PLOT_DIR):
         pages_data = []
@@ -62,4 +49,4 @@ class PDF(FPDF):
         pages = len(files) // 2
         for i in range(pages):
             pages_data.append([files[0+i], files[pages+i]])
-        return [*pages_data]
+        return pages_data

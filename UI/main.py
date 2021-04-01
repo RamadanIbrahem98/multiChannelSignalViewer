@@ -3,7 +3,6 @@ import shutil
 import os
 import csv
 import datetime
-import pathlib
 import numpy as np
 import pandas as pd
 import pyqtgraph.exporters
@@ -45,12 +44,11 @@ class MainWindow(qtw.QMainWindow):
 
         self.PLOT_DIR = 'Plots'
         self.PDF_DIR = 'PDFs'
-        self.y = [[], [], []]
-        self.x = [[], [], []]
+        self.amplitude = [[], [], []]
+        self.time = [[], [], []]
 
         self.data_line = [[], [], []]
         self.spectrogramData = [None, None, None]
-        # self.data = [[], [], []]
         self.pointsToAppend = [0, 0, 0]
         self.isResumed = [False, False, False]
         self.setChannelChecked = [self.ui.showChannel1,
@@ -63,16 +61,18 @@ class MainWindow(qtw.QMainWindow):
         self.CHANNEL3 = 2
 
         self.ui.showChannel1.setChecked(True)
+        self.ui.showChannel2.setChecked(True)
+        self.ui.showChannel3.setChecked(True)
         self.ui.channel1.show()
-        self.ui.channel2.hide()
-        self.ui.channel3.hide()
+        self.ui.channel2.show()
+        self.ui.channel3.show()
 
         self.ui.showChannel1.stateChanged.connect(
-            lambda: self.hide(self.CHANNEL1))
+            lambda: self.toggle(self.CHANNEL1))
         self.ui.showChannel2.stateChanged.connect(
-            lambda: self.hide(self.CHANNEL2))
+            lambda: self.toggle(self.CHANNEL2))
         self.ui.showChannel3.stateChanged.connect(
-            lambda: self.hide(self.CHANNEL3))
+            lambda: self.toggle(self.CHANNEL3))
 
         self.ui.actionAbout.triggered.connect(lambda: self.showAbout())
         self.ui.actionExit.triggered.connect(lambda: self.close())
@@ -120,30 +120,32 @@ class MainWindow(qtw.QMainWindow):
         self.about.show()
 
     def play(self, channel: int) -> None:
-        if not self.y[channel]:
+        if not self.amplitude[channel]:
             self.browse(channel)
         if not self.isResumed[channel]:
             self.timers[channel].start()
             self.isResumed[channel] = True
 
     def pause(self, channel: int) -> None:
-        if not self.y[channel]:
+        if not self.amplitude[channel]:
             self.browse(channel)
         if self.isResumed[channel]:
             self.timers[channel].stop()
             self.isResumed[channel] = False
 
     def clear(self, channel: int) -> None:
-        if self.y[channel]:
+        if self.amplitude[channel]:
             self.graphChannels[channel].removeItem(self.data_line[channel])
-            self.spectrogramChannels[channel].removeItem(self.spectrogramData[channel])
+            self.spectrogramChannels[channel].removeItem(
+                self.spectrogramData[channel])
             self.timers[channel].stop()
             self.isResumed[channel] = False
-            self.y[channel] = []
-            self.x[channel] = []
+            self.amplitude[channel] = []
+            self.time[channel] = []
             self.data_line[channel] = []
+            self.spectrogramData[channel] = None
 
-    def hide(self, channel: int) -> None:
+    def toggle(self, channel: int) -> None:
         if(self.channelComponents[channel].isVisible()):
             self.channelComponents[channel].hide()
             self.setChannelChecked[channel].setChecked(False)
@@ -157,11 +159,11 @@ class MainWindow(qtw.QMainWindow):
         self.newWindow.show()
 
     def browse(self, channel: int) -> None:
-        self.hide(channel)
+        self.toggle(channel)
 
         # self.clear(channel)
         self.filenames[channel] = qtw.QFileDialog.getOpenFileName(
-            None, 'Load Signal', './', "Raw Data(*.csv)")
+            None, 'Load Signal', './', "Raw Data(*.csv *.xls *.txt)")
         path = self.filenames[channel][0]
         self.openFile(path, channel)
 
@@ -169,8 +171,8 @@ class MainWindow(qtw.QMainWindow):
         with open(path, 'r') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             for line in csv_reader:
-                self.y[channel].append(float(line[1]))
-                self.x[channel].append(float(line[0]))
+                self.amplitude[channel].append(float(line[1]))
+                self.time[channel].append(float(line[0]))
         self.isResumed[channel] = True
 
         self.plotGraph(channel)
@@ -178,9 +180,9 @@ class MainWindow(qtw.QMainWindow):
 
     def plotGraph(self, channel: int) -> None:
         self.data_line[channel] = self.graphChannels[channel].plot(
-            self.x[channel], self.y[channel], name='CH1', pen=self.pen[channel])
+            self.time[channel], self.amplitude[channel], name='CH1', pen=self.pen[channel])
         self.graphChannels[channel].plotItem.setLimits(
-            xMin=0, xMax=6, yMin=-(np.mean(self.y[channel]) - min(self.y[channel])), yMax=np.mean(self.y[channel]) - min(self.y[channel]))
+            xMin=0, xMax=1.0, yMin=min(self.amplitude[channel]), yMax=max(self.amplitude[channel]))
 
         self.pointsToAppend[channel] = 0
         self.timers[channel].setInterval(150)
@@ -188,14 +190,14 @@ class MainWindow(qtw.QMainWindow):
         self.timers[channel].start()
 
     def updatePlot(self, channel: int) -> None:
-        xaxis = self.x[channel][:self.pointsToAppend[channel]]
-        yaxis = self.y[channel][:self.pointsToAppend[channel]]
+        xaxis = self.time[channel][:self.pointsToAppend[channel]]
+        yaxis = self.amplitude[channel][:self.pointsToAppend[channel]]
         self.pointsToAppend[channel] += 20
-        if self.pointsToAppend[channel] > len(self.x[channel]):
+        if self.pointsToAppend[channel] > len(self.time[channel]):
             self.timers[channel].stop()
 
-        if self.x[channel][self.pointsToAppend[channel]] > 1.0:
-            self.graphChannels[channel].setLimits(xMin=min(xaxis, default=0), xMax=max(
+        if self.time[channel][self.pointsToAppend[channel]] > 1.0:
+            self.graphChannels[channel].setLimits(xMax=max(
                 xaxis, default=0))
         self.graphChannels[channel].plotItem.setXRange(
             max(xaxis, default=0)-1.0, max(xaxis, default=0))
@@ -204,20 +206,11 @@ class MainWindow(qtw.QMainWindow):
 
     def plotSpectrogram(self, channel: int) -> None:
         pyqtgraph.setConfigOptions(imageAxisOrder='row-major')
-        # mwindow = MatplotlibWidget()
-        # subplot = mwindow.getFigure().add_subplot(111)
-        # subplot.plot(self.x[channel], self.y[channel])
-        # mwindow.draw()
-        #     sc = MplCanvas(
-        #         self, width=5, height=4, dpi=100)
-        #     sc.axes.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
-        #     self.setCentralWidget(sc)
-        #     self.data_line[channel] = self.graphChannels[channel].plot(
-        #         list(range(self.y[channel].size)), self.y[channel], name='CH1', pen=self.pen[channel])
-        fs = 1 / (self.x[channel][1] - self.x[channel][0])
-        yaxis = np.array(self.y[channel])
+        fs = 1 / (self.time[channel][1] - self.time[channel][0])
+        yaxis = np.array(self.amplitude[channel])
         f, t, Sxx = scipy.signal.spectrogram(yaxis, fs)
-        self.spectrogramData[channel] = self.spectrogramChannels[channel].addPlot()
+        self.spectrogramData[channel] = self.spectrogramChannels[channel].addPlot(
+        )
 
         # Item for displaying image data
         img = pg.ImageItem()
@@ -227,7 +220,8 @@ class MainWindow(qtw.QMainWindow):
         # Link the histogram to the image
         hist.setImageItem(img)
         # If you don't add the histogram to the window, it stays invisible, but I find it useful.
-        self.spectrogramChannels[channel].addItem(self.spectrogramData[channel])
+        self.spectrogramChannels[channel].addItem(
+            self.spectrogramData[channel])
         # Show the window
         self.spectrogramChannels[channel].show()
         # Fit the min and max levels of the histogram to the data available
@@ -240,20 +234,21 @@ class MainWindow(qtw.QMainWindow):
                        (1.0, (246, 111, 0, 255)),
                        (0.0, (75, 0, 113, 255))]
              })
-        hist.gradient.showTicks(False)
-        hist.shape
-        hist.layout.setContentsMargins(0, 0, 0, 0)
-        hist.vb.setMouseEnabled(x=False, y=False)
-        
-        hist.vb.setMenuEnabled(False)
-        hist.shape
+        # hist.gradient.showTicks(False)
+        # hist.shape
+        # hist.layout.setContentsMargins(0, 0, 0, 0)
+        # hist.vb.setMouseEnabled(x=False, y=False)
+
+        # hist.vb.setMenuEnabled(False)
+        # hist.shape
         # Sxx contains the amplitude for each pixel
         img.setImage(Sxx)
         # Scale the X and Y Axis to time and frequency (standard is pixels)
         img.scale(t[-1]/np.size(Sxx, axis=1),
                   f[-1]/np.size(Sxx, axis=0))
         # Limit panning/zooming to the spectrogram
-        self.spectrogramData[channel].setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
+        self.spectrogramData[channel].setLimits(
+            xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
         # Add labels to the axis
         # self.spectrogramData[channel].setLabel('bottom', "Time", units='s')
         # If you include the units, Pyqtgraph automatically scales the axis and adjusts the SI prefix (in this case kHz)
@@ -266,29 +261,37 @@ class MainWindow(qtw.QMainWindow):
         self.graphChannels[channel].plotItem.getViewBox().scaleBy((1.25, 1.25))
 
     def generatePDF(self):
+        images = [0, 0, 0]
+        Idx = 0
+        for channel in range(3):
+            if self.amplitude[channel]:
+                images[channel] = 1
+                Idx += 1
+            else:
+                self.toggle(channel)
+
+        if not Idx:
+            qtw.QMessageBox.information(
+                self, 'failed', 'You have to plot a signal first')
+            return
+
         try:
             shutil.rmtree(self.PLOT_DIR)
             os.mkdir(self.PLOT_DIR)
         except FileNotFoundError:
             os.mkdir(self.PLOT_DIR)
 
-        images = [0, 0, 0]
-        for i in range(3):
-            if self.y[i]:
-                images[i] = 1
-            else:
-                self.hide(i)
-
-        for i in range(3):
-            if images[i]:
+        for channel in range(3):
+            if images[channel]:
                 exporter = pg.exporters.ImageExporter(
-                    self.graphChannels[i].plotItem)
-                exporter.parameters()['width'] = 470
-                exporter.export(f'{self.PLOT_DIR}/plot-{i}.png')
+                    self.graphChannels[channel].plotItem)
+                exporter.parameters()[
+                    'width'] = self.graphChannels[channel].plotItem.width()
+                exporter.export(f'{self.PLOT_DIR}/plot-{channel}.png')
 
                 exporter = pg.exporters.ImageExporter(
-                    self.spectrogramChannels[i].scene())
-                exporter.export(f'{self.PLOT_DIR}/spec-{i}.png')
+                    self.spectrogramChannels[channel].scene())
+                exporter.export(f'{self.PLOT_DIR}/spec-{channel}.png')
 
         pdf = PDF()
         plots_per_page = pdf.construct(self.PLOT_DIR)
