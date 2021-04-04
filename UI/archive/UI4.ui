@@ -352,17 +352,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_4"/>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_5"/>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_6"/>
-            </item>
-           </layout>
+           <layout class="QHBoxLayout" name="horizontalLayout_3"/>
           </item>
          </layout>
         </item>

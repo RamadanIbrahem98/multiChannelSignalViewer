@@ -35,11 +35,10 @@ class MainWindow(qtw.QMainWindow):
         self.CHANNEL3 = 2
         self.PLOT_DIR = 'Plots'
         self.filenames = ['', '', '']
-        self.y = [[], [], []]
-        self.x = [[], [], []]
-        self.a = [[], [], []]
-        self.xIdx = [[0, 0], [0, 0], [0, 0]]
-        self.data_line = [[], [], []]
+        self.amplitude = [[], [], []]
+        self.time = [[], [], []]
+        self.timeIdx = [[0, 0], [0, 0], [0, 0]]
+        self.upToDateGraph = [[], [], []]
         self.spectrogramData = [None, None, None]
         self.pointsToAppend = [0, 0, 0]
         self.isResumed = [False, False, False]
@@ -138,22 +137,22 @@ class MainWindow(qtw.QMainWindow):
         with open(path, 'r') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             for line in csv_reader:
-                self.y[channel].append(float(line[1]))
-                self.x[channel].append(float(line[0]))
+                self.amplitude[channel].append(float(line[1]))
+                self.time[channel].append(float(line[0]))
         self.isResumed[channel] = True
 
         self.plotGraph(channel)
         self.plotSpectrogram(channel)
 
     def play(self, channel: int) -> None:
-        if not self.y[channel]:
+        if not self.amplitude[channel]:
             self.browse(channel)
         if not self.isResumed[channel]:
             self.timers[channel].start()
             self.isResumed[channel] = True
 
     def pause(self, channel: int) -> None:
-        if not self.y[channel]:
+        if not self.amplitude[channel]:
             self.browse(channel)
         if self.isResumed[channel]:
             self.timers[channel].stop()
@@ -166,49 +165,48 @@ class MainWindow(qtw.QMainWindow):
         self.graphChannels[channel].plotItem.getViewBox().scaleBy((1.25, 1.25))
 
     def clear(self, channel: int) -> None:
-        if self.y[channel]:
-            self.graphChannels[channel].removeItem(self.data_line[channel])
+        if self.amplitude[channel]:
+            self.graphChannels[channel].removeItem(self.upToDateGraph[channel])
             self.spectrogramChannels[channel].removeItem(
                 self.spectrogramData[channel])
             self.timers[channel].stop()
             self.isResumed[channel] = False
-            self.y[channel] = []
-            self.x[channel] = []
-            self.data_line[channel] = []
+            self.amplitude[channel] = []
+            self.time[channel] = []
+            self.upToDateGraph[channel] = []
 
     def plotGraph(self, channel: int) -> None:
-        self.data_line[channel] = self.graphChannels[channel].plot(
-            self.x[channel], self.y[channel], name='CH1', pen=self.pen[channel])
+        self.upToDateGraph[channel] = self.graphChannels[channel].plot(
+            self.time[channel], self.amplitude[channel], name='CH1', pen=self.pen[channel])
         self.graphChannels[channel].plotItem.setLimits(xMin=0, xMax=6, yMin=-(np.mean(
-            self.y[channel]) - min(self.y[channel])), yMax=np.mean(self.y[channel]) - min(self.y[channel]))
+            self.amplitude[channel]) - min(self.amplitude[channel])), yMax=np.mean(self.amplitude[channel]) - min(self.amplitude[channel]))
 
         self.pointsToAppend[channel] = 0
         print()
         self.timers[channel].setInterval(150)
         self.timers[channel].timeout.connect(lambda: self.updatePlot(channel))
-        if self.pointsToAppend[channel] < len(self.x[channel]):
+        if self.pointsToAppend[channel] < len(self.time[channel]):
             self.timers[channel].start()
 
     def updatePlot(self, channel: int) -> None:
-        xaxis = self.x[channel][:self.pointsToAppend[channel]]
-        self.a[channel] = xaxis
-        yaxis = self.y[channel][:self.pointsToAppend[channel]]
+        xaxis = self.time[channel][:self.pointsToAppend[channel]]
+        yaxis = self.amplitude[channel][:self.pointsToAppend[channel]]
         self.pointsToAppend[channel] += 20
-        if self.pointsToAppend[channel] > len(self.x[channel]):
+        if self.pointsToAppend[channel] > len(self.time[channel]):
             self.timers[channel].stop()
 
-        if self.x[channel][self.pointsToAppend[channel]] > 1.0:
+        if self.time[channel][self.pointsToAppend[channel]] > 1.0:
             self.graphChannels[channel].setLimits(
                 xMin=min(xaxis, default=0), xMax=max(xaxis, default=0))
         self.graphChannels[channel].plotItem.setXRange(
             max(xaxis, default=0)-1.0, max(xaxis, default=0))
 
-        self.data_line[channel].setData(xaxis, yaxis)
+        self.upToDateGraph[channel].setData(xaxis, yaxis)
 
     def plotSpectrogram(self, channel: int) -> None:
         pyqtgraph.setConfigOptions(imageAxisOrder='row-major')
-        fs = 1 / (self.x[channel][1] - self.x[channel][0])
-        yaxis = np.array(self.y[channel])
+        fs = 1 / (self.time[channel][1] - self.time[channel][0])
+        yaxis = np.array(self.amplitude[channel])
         f, t, Sxx = scipy.signal.spectrogram(yaxis, fs)
         self.spectrogramData[channel] = self.spectrogramChannels[channel].addPlot(
         )
@@ -232,8 +230,8 @@ class MainWindow(qtw.QMainWindow):
         img.scale(t[-1]/np.size(Sxx, axis=1), f[-1]/np.size(Sxx, axis=0))
         self.spectrogramData[channel].setLimits(
             xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
-        self.spectrogramData[channel].setLabel('bottom', "Time", units='s')
-        self.spectrogramData[channel].setLabel('left', "Frequency", units='Hz')
+        # self.spectrogramData[channel].setLabel('bottom', "Time", units='s')
+        # self.spectrogramData[channel].setLabel('left', "Frequency", units='Hz')
 
     def generatePDF(self):
         images = [0, 0, 0]
@@ -241,7 +239,7 @@ class MainWindow(qtw.QMainWindow):
         xmax = [self.pointsToAppend[0],
                 self.pointsToAppend[1], self.pointsToAppend[2]]
         for channel in range(3):
-            if self.y[channel]:
+            if self.amplitude[channel]:
                 images[channel] = 1
                 self.pause(channel)
                 rows += 1
@@ -270,20 +268,24 @@ class MainWindow(qtw.QMainWindow):
         qtw.QMessageBox.information(self, 'success', 'PDF has been created')
 
     def getFigure(self, fig, channel, xmax) -> None:
-        xRange = round(1 / (self.x[channel][1] - self.x[channel][0]))
+        xRange = round(1 / (self.time[channel][1] - self.time[channel][0]))
         if(xmax - xRange > 0):
             xmin = xmax - xRange
         else:
             xmin = 0
 
-        fig.plot(self.x[channel][xmin:xmax], self.y[channel][xmin:xmax])
+        fig.plot(self.time[channel][xmin:xmax],
+                 self.amplitude[channel][xmin:xmax])
         fig.set_xlabel('time (sec)')
         fig.set_ylabel('amplitude (v)')
         fig.set_title(f'plot - {channel + 1}')
 
     def getSpectrogram(self, fig, channel):
-        fs = 1/(self.x[channel][1] - self.x[channel][0])
-        fig.specgram(np.array(self.y[channel]).astype(float), Fs=fs)
+        fs = 1/(self.time[channel][1] - self.time[channel][0])
+        f, t, Sxx = scipy.signal.spectrogram(
+            np.array(self.amplitude[channel]), fs)
+        fig.pcolormesh(t, f, Sxx, shading='gouraud')
+        fig.specgram(np.array(self.amplitude[channel]).astype(float), Fs=fs)
         fig.set_xlabel('time (sec)')
         fig.set_ylabel('frequency (Hz)')
         fig.set_title(f'spectrogram - {channel + 1}')
