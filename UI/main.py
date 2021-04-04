@@ -300,7 +300,7 @@ class MainWindow(qtw.QMainWindow):
             pdf.print_page(elem, self.PLOT_DIR)
 
         now = datetime.datetime.now()
-        now = f'{now:%Y-%m-%d %H-%M-%S.%f %p}'
+        now = f'{now:%Y-%m-%d %H-%M %p}'
         try:
             os.mkdir(self.PDF_DIR)
         except:
