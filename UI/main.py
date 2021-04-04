@@ -47,7 +47,7 @@ class MainWindow(qtw.QMainWindow):
         self.amplitude = [[], [], []]
         self.time = [[], [], []]
 
-        self.data_line = [[], [], []]
+        self.upToDatePlots = [[], [], []]
         self.spectrogramData = [None, None, None]
         self.pointsToAppend = [0, 0, 0]
         self.isResumed = [False, False, False]
@@ -135,14 +135,14 @@ class MainWindow(qtw.QMainWindow):
 
     def clear(self, channel: int) -> None:
         if self.amplitude[channel]:
-            self.graphChannels[channel].removeItem(self.data_line[channel])
+            self.graphChannels[channel].removeItem(self.upToDatePlots[channel])
             self.spectrogramChannels[channel].removeItem(
                 self.spectrogramData[channel])
             self.timers[channel].stop()
             self.isResumed[channel] = False
             self.amplitude[channel] = []
             self.time[channel] = []
-            self.data_line[channel] = []
+            self.upToDatePlots[channel] = []
             self.spectrogramData[channel] = None
 
     def toggle(self, channel: int) -> None:
@@ -179,7 +179,7 @@ class MainWindow(qtw.QMainWindow):
         self.plotSpectrogram(channel)
 
     def plotGraph(self, channel: int) -> None:
-        self.data_line[channel] = self.graphChannels[channel].plot(
+        self.upToDatePlots[channel] = self.graphChannels[channel].plot(
             self.time[channel], self.amplitude[channel], name='CH1', pen=self.pen[channel])
         self.graphChannels[channel].plotItem.setLimits(
             xMin=0, xMax=1.0, yMin=min(self.amplitude[channel]), yMax=max(self.amplitude[channel]))
@@ -202,7 +202,7 @@ class MainWindow(qtw.QMainWindow):
         self.graphChannels[channel].plotItem.setXRange(
             max(xaxis, default=0)-1.0, max(xaxis, default=0))
 
-        self.data_line[channel].setData(xaxis, yaxis)
+        self.upToDatePlots[channel].setData(xaxis, yaxis)
 
     def plotSpectrogram(self, channel: int) -> None:
         pyqtgraph.setConfigOptions(imageAxisOrder='row-major')
@@ -300,7 +300,7 @@ class MainWindow(qtw.QMainWindow):
             pdf.print_page(elem, self.PLOT_DIR)
 
         now = datetime.datetime.now()
-        now = f'{now:%Y-%m-%d %H-%M %p}'
+        now = f'{now:%Y-%m-%d %H-%M-%S.%f %p}'
         try:
             os.mkdir(self.PDF_DIR)
         except:
